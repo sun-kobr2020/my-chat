@@ -1,0 +1,111 @@
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: sans-serif; 
+}
+body { 
+    background: #e5ddd5; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh; 
+    overflow: hidden; 
+}
+#room-info { 
+    background: #075e54; 
+    color: white; 
+    padding: 10px 15px; 
+    font-size: 0.9em; 
+    font-weight: bold; 
+}
+#chat-window { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 15px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    padding-bottom: 80px; 
+}
+.msg { 
+    background: white; 
+    padding: 8px 12px; 
+    border-radius: 8px; 
+    max-width: 80%; 
+    width: fit-content; 
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1); 
+}
+.msg .user { 
+    font-weight: bold; 
+    color: #075e54; 
+    font-size: 0.85em; 
+    margin-bottom: 3px; 
+}
+/* Стили для картинок, присланных в чат */
+.msg img {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 6px;
+    margin-top: 5px;
+    display: block;
+}
+/* Стили для видеоплеєра в чате */
+.msg video {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 6px;
+    margin-top: 5px;
+    display: block;
+}
+.msg .time { 
+    font-size: 0.7em; 
+    color: #999; 
+    text-align: right; 
+    margin-top: 3px; 
+}
+#input-area { 
+    background: #f0f0f0; 
+    padding: 10px; 
+    display: flex; 
+    gap: 10px; 
+    position: fixed; 
+    bottom: 60px; 
+    left: 0; 
+    width: 100%; 
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1); 
+    z-index: 9999; 
+    align-items: center;
+}
+input, button, .file-label { 
+    padding: 12px; 
+    border: 1px solid #ccc; 
+    border-radius: 20px; 
+    outline: none; 
+    font-size: 16px; 
+}
+input[type="text"] { 
+    flex: 1; 
+}
+/* Кнопка-скрепка для выбора файлов */
+.file-label {
+    background: #cfd8dc;
+    color: #37474f;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+button { 
+    background: #075e54; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    padding: 12px 20px; 
+}
+/* Прячем стандартную уродливую системную кнопку выбора файлов */
+#file-input {
+    display: none;
+}
