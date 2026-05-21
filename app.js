@@ -22,6 +22,8 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
+console.log("ПроверкаProjectId:", firebaseConfig.projectId);
+
 // Инициализация модулей
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
