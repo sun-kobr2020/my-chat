@@ -1,3 +1,10 @@
+// Вспомогательная функция
+function escapeHtml(text) {
+    return text ? text.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;") : '';
+}
+
 // Импортируем модули локально из папки firebase
 import { initializeApp } from "firebase/app";
 import {
@@ -202,30 +209,41 @@ msgInput.addEventListener('keydown', (e) => {
 
 fileInput.addEventListener('change', handleFileUpload);
 
-// Вспомогательная функция
-function escapeHtml(text) {
-    return text ? text.replace(/&/g, "&amp;")
-                     .replace(/</g, "&lt;")
-                     .replace(/>/g, "&gt;") : '';
-}
-
 console.log("✅ Чат инициализирован, комната:", currentRoom);
 
+// Находим кнопки в DOM
 const createRoomBtn = document.getElementById('create-room-btn');
 const shareRoomBtn = document.getElementById('share-room-btn');
+const backToGeneralBtn = document.getElementById('back-to-general-btn'); // Добавили новую кнопку
 
-// ИСПРАВЛЕНО: берем вашу точную переменную currentRoom
+// Если мы находимся в приватной комнате
 if (currentRoom !== 'general') {
     shareRoomBtn.style.display = 'inline-block';
+    if (backToGeneralBtn) {
+        backToGeneralBtn.style.display = 'inline-block'; // Показываем кнопку возврата
+    }
 }
 
-createRoomBtn.addEventListener('click', () => {
-    const randomRoomId = 'rm-' + Math.random().toString(16).substring(2, 10);
-    window.location.search = `?room=${randomRoomId}`;
-});
+// Создание приватной комнаты
+if (createRoomBtn) {
+    createRoomBtn.addEventListener('click', () => {
+        const randomRoomId = 'rm-' + Math.random().toString(16).substring(2, 10);
+        window.location.search = `?room=${randomRoomId}`;
+    });
+}
 
-shareRoomBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(window.location.href)
-        .then(() => alert('Ссылка на приватную комнату скопирована в буфер обмена!'))
-        .catch(err => console.error('Не удалось скопировать:', err));
-});
+// Копирование ссылки
+if (shareRoomBtn) {
+    shareRoomBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(window.location.href)
+            .then(() => alert('Ссылка на приватную комнату скопирована в буфер обмена!'))
+            .catch(err => console.error('Не удалось скопировать:', err));
+    });
+}
+
+// Возврат в общий чат (general)
+if (backToGeneralBtn) {
+    backToGeneralBtn.addEventListener('click', () => {
+        window.location.search = ''; // Очистка параметров URL возвращает на general
+    });
+}
