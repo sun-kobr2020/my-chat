@@ -141,57 +141,25 @@ async function sendMessage() {
     }
 }
 
-// ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛОВ ЧЕРЕЗ BASE64 (РАБОТАЕТ БЕЗ STORAGE)
+// ПРОФЕССИОНАЛЬНАЯ И НЕЗАМЕТНАЯ ЗАГЛУШКА
 async function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Ограничение: для текстовой базы данных файлы должны быть небольшими (до 700 КБ)
-    if (file.size > 700 * 1024) {
-        alert("Без облачного хранилища можно отправлять файлы только до 700 КБ!");
-        fileInput.value = "";
-        return;
-    }
+    // Сразу сбрасываем выбор файла
+    fileInput.value = "";
 
-    const username = userInput.value.trim() || "Аноним";
+    // Вместо ошибки или алерта — плавно меняем текст в инпуте
+    const originalPlaceholder = msgInput.placeholder;
+    msgInput.value = "";
+    msgInput.placeholder = "⚠️ Отправка файлов временно отключена...";
+    msgInput.disabled = true;
 
-    try {
-        // Блокируем интерфейс на долю секунды, пока браузер читает файл
-        msgInput.value = "📤 Кодирую файл...";
-        msgInput.disabled = true;
-        sendBtn.disabled = true;
-
-        // Читаем файл и превращаем его в текстовую строку URL
-        const base64String = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
-            reader.readAsDataURL(file);
-        });
-
-        console.log("✅ Файл успешно сконвертирован локально");
-
-        // Записываем данные прямо в нашу рабочую базу Firestore!
-        await addDoc(messagesRef, {
-            username: username,
-            text: `Отправил файл: ${file.name}`,
-            fileUrl: base64String, // Текстовый код файла вместо ссылки на Storage
-            fileType: file.type,
-            createdAt: serverTimestamp()
-        });
-
-        console.log("✅ Сообщение с локальным файлом добавлено в Firestore");
-        msgInput.value = "";
-    } catch (error) {
-        console.error("❌ Ошибка при обработке файла:", error);
-        alert("Не удалось отправить файл: " + error.message);
-        msgInput.value = "";
-    } finally {
-        // Интерфейс разблокируется в любом случае!
+    // Ждем 2 секунды и возвращаем всё назад
+    setTimeout(() => {
+        msgInput.placeholder = originalPlaceholder;
         msgInput.disabled = false;
-        sendBtn.disabled = false;
-        fileInput.value = "";
-    }
+    }, 2000);
 }
 
 // Привязка событий
