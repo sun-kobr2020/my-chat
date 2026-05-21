@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мой Firebase Мессенджер</title>
-  <script type="module" crossorigin src="/my-chat/assets/index-C1QeBEJe.js"></script>
+  <script type="module" crossorigin src="/my-chat/assets/index-zmKHaMsA.js"></script>
   <link rel="stylesheet" crossorigin href="/my-chat/assets/index-D2YdPucu.css">
 </head>
 <body>
 
-    <div class="room-controls">
-        <button id="create-room-btn">Создать приватную комнату</button>
-        <button id="share-room-btn" style="display: none;">Скопировать ссылку</button>
-        <button id="back-to-general-btn" style="display: none;">В общий чат</button>
+    <div class="rooms-container">
+        <h3>Доступные комнаты:</h3>
+        <ul id="rooms-list">
+            <!-- Сюда JavaScript будет вставлять комнаты динамически -->
+        </ul>
     </div>
 
     <div id="room-info">Комната: <span id="room-name">Загрузка...</span></div>
