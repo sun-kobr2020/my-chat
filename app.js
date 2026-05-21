@@ -211,23 +211,19 @@ function escapeHtml(text) {
 
 console.log("✅ Чат инициализирован, комната:", currentRoom);
 
-// 1. Получаем новые элементы из HTML
 const createRoomBtn = document.getElementById('create-room-btn');
 const shareRoomBtn = document.getElementById('share-room-btn');
 
-// ИСПРАВЛЕНО: используем roomName вместо currentRoomId
-if (roomName !== 'general') {
+// ИСПРАВЛЕНО: берем вашу точную переменную currentRoom
+if (currentRoom !== 'general') {
     shareRoomBtn.style.display = 'inline-block';
 }
 
-// 2. Логика кнопки "Создать приватную комнату"
 createRoomBtn.addEventListener('click', () => {
     const randomRoomId = 'rm-' + Math.random().toString(16).substring(2, 10);
-    // ИСПРАВЛЕНО: проверяем, как у вас в коде извлекается параметр (get('room'))
     window.location.search = `?room=${randomRoomId}`;
 });
 
-// 3. Логика кнопки "Скопировать ссылку"
 shareRoomBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(window.location.href)
         .then(() => alert('Ссылка на приватную комнату скопирована в буфер обмена!'))
