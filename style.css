@@ -109,3 +109,26 @@ button {
 #file-input {
     display: none;
 }
+
+.room-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 0 10px;
+}
+
+#create-room-btn, #share-room-btn {
+    background-color: #2d6a4f; /* Ваша темно-зеленая палитра */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px; /* Скругленные края как у ваших инпутов */
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#create-room-btn:hover, #share-room-btn:hover {
+    background-color: #1b4332; /* Затемнение при наведении */
+}
