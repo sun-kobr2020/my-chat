@@ -7,16 +7,36 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="app-layout">
 
-    <div class="rooms-container">
-        <h3>Доступные комнаты:</h3>
-        <ul id="rooms-list">
-            <!-- Сюда JavaScript будет вставлять комнаты динамически -->
-        </ul>
+        <!-- ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <button id="create-room-btn">➕ Создать комнату</button>
+            </div>
+
+            <div class="rooms-container">
+                <h3>Доступные комнаты:</h3>
+                <ul id="rooms-list">
+                    <!-- Сюда JS вставляет комнаты -->
+                </ul>
+            </div>
+        </aside>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
+        <main class="chat-main">
+            <div class="chat-header">
+                <h2 id="room-name">Комната: general</h2>
+                <button id="share-room-btn" style="display: none;">🔗 Ссылка</button>
+                <button id="back-to-general-btn" style="display: none;">🔙 В общий чат</button>
+            </div>
+
+            <!-- Ваше старое окно чата и инпуты оставляем ниже без изменений -->
+            <div id="chat-window"></div>
+            <!-- ... блоки ввода сообщений ... -->
+        </main>
+
     </div>
-
-    <div id="room-info">Комната: <span id="room-name">Загрузка...</span></div>
-    <div id="chat-window"><!-- Сообщения --></div>
 
     <div id="input-area">
         <label for="file-input" class="file-label">📎</label>

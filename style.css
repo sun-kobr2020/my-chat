@@ -132,3 +132,82 @@ button {
 #create-room-btn:hover, #share-room-btn:hover {
     background-color: #1b4332; /* Затемнение при наведении */
 }
+
+/* Сетка для разделения экрана */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    font-family: sans-serif;
+}
+
+/* Стили левой панели */
+.sidebar {
+    width: 250px;
+    background-color: #1b4332; /* Темно-зеленый */
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #2d6a4f;
+}
+
+.sidebar h3 {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #d8f3dc;
+}
+
+#rooms-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+#rooms-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    background-color: #2d6a4f;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+#rooms-list a {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    flex-grow: 1;
+}
+
+/* Стили кнопок управления */
+#create-room-btn {
+    width: 100%;
+    background-color: #40916c;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#create-room-btn:hover {
+    background-color: #52b788;
+}
+
+/* Правая часть с чатом */
+.chat-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background-color: #f4f4f9;
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
