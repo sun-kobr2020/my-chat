@@ -8,14 +8,8 @@ function escapeHtml(text) {
 // Импортируем модули локально из папки firebase
 import { initializeApp } from "firebase/app";
 import {
-    getFirestore,
-    collection,
-    addDoc,
-    query,
-    orderBy,
-    limit,
-    onSnapshot,
-    serverTimestamp
+    getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
+    doc, setDoc, deleteDoc
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -211,28 +205,43 @@ fileInput.addEventListener('change', handleFileUpload);
 
 console.log("✅ Чат инициализирован, комната:", currentRoom);
 
-// Находим кнопки в DOM
+// ==========================================
+// ЛОГИКА УПРАВЛЕНИЯ ПРИВАТНЫМИ КОМНАТАМИ
+// ==========================================
+
+// Находим кнопки и контейнер для списка в DOM
 const createRoomBtn = document.getElementById('create-room-btn');
 const shareRoomBtn = document.getElementById('share-room-btn');
-const backToGeneralBtn = document.getElementById('back-to-general-btn'); // Добавили новую кнопку
+const backToGeneralBtn = document.getElementById('back-to-general-btn');
+const roomsListElement = document.getElementById('rooms-list');
 
-// Если мы находимся в приватной комнате
+// Если мы находимся в приватной комнате — показываем кнопки управления
 if (currentRoom !== 'general') {
-    shareRoomBtn.style.display = 'inline-block';
-    if (backToGeneralBtn) {
-        backToGeneralBtn.style.display = 'inline-block'; // Показываем кнопку возврата
-    }
+    if (shareRoomBtn) shareRoomBtn.style.display = 'inline-block';
+    if (backToGeneralBtn) backToGeneralBtn.style.display = 'inline-block';
 }
 
-// Создание приватной комнаты
+// 1. Создание приватной комнаты с регистрацией в Firestore
 if (createRoomBtn) {
-    createRoomBtn.addEventListener('click', () => {
+    createRoomBtn.addEventListener('click', async () => {
+        // Генерируем уникальный хэш для комнаты
         const randomRoomId = 'rm-' + Math.random().toString(16).substring(2, 10);
-        window.location.search = `?room=${randomRoomId}`;
+
+        try {
+            // Создаем пустой документ в коллекции all_rooms на сервере, чтобы зафиксировать её существование
+            await setDoc(doc(db, "all_rooms", randomRoomId), {
+                createdAt: serverTimestamp()
+            });
+            // Перенаправляем пользователя в созданную комнату
+            window.location.search = `?room=${randomRoomId}`;
+        } catch (e) {
+            console.error("Ошибка при регистрации комнаты в базе:", e);
+            alert("Не удалось создать комнату в базе данных: " + e.message);
+        }
     });
 }
 
-// Копирование ссылки
+// 2. Логика кнопки "Скопировать ссылку"
 if (shareRoomBtn) {
     shareRoomBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(window.location.href)
@@ -241,9 +250,53 @@ if (shareRoomBtn) {
     });
 }
 
-// Возврат в общий чат (general)
+// 3. Логика кнопки "В общий чат"
 if (backToGeneralBtn) {
     backToGeneralBtn.addEventListener('click', () => {
-        window.location.search = ''; // Очистка параметров URL возвращает на general
+        window.location.search = ''; // Очищаем параметры, что возвращает в general
+    });
+}
+
+// 4. Слушатель списка всех приватных комнат в реальном времени
+if (roomsListElement) {
+    const roomsQuery = query(collection(db, "all_rooms"), orderBy("createdAt", "desc"));
+
+    onSnapshot(roomsQuery, (snapshot) => {
+        // Сбрасываем список и всегда делаем общую комнату general первой в списке
+        roomsListElement.innerHTML = `<li><a href="${window.location.pathname}">🌐 general</a></li>`;
+
+        snapshot.forEach((roomDoc) => {
+            const roomId = roomDoc.id;
+
+            // Создаем элемент списка с кнопкой удаления
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <a href="?room=${roomId}">🔑 ${roomId}</a>
+                <button class="delete-room-btn" data-id="${roomId}" style="margin-left: 10px; color: red; background: none; border: none; cursor: pointer;">❌</button>
+            `;
+            roomsListElement.appendChild(li);
+        });
+
+        // Вешаем событие удаления на все созданные крестики
+        document.querySelectorAll('.delete-room-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault(); // Защита от случайного перехода по ссылке
+                const idToDelete = btn.getAttribute('data-id');
+
+                if (confirm(`Вы уверены, что хотите удалить комнату ${idToDelete}? Она исчезнет у всех.`)) {
+                    try {
+                        // Удаляем запись о комнате из коллекции all_rooms
+                        await deleteDoc(doc(db, "all_rooms", idToDelete));
+
+                        // Если пользователь в этот момент находился внутри удаляемой комнаты — выкидываем его в general
+                        if (currentRoom === idToDelete) {
+                            window.location.search = '';
+                        }
+                    } catch (err) {
+                        alert("Ошибка при удалении комнаты: " + err.message);
+                    }
+                }
+            });
+        });
     });
 }
