@@ -3,51 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой Firebase Мессенджер</title>
+    <title>Мессенджер комнат</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-layout">
 
-        <!-- ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <button id="create-room-btn">➕ Создать комнату</button>
-            </div>
+<div class="app-layout">
 
-            <div class="rooms-container">
-                <h3>Доступные комнаты:</h3>
-                <ul id="rooms-list">
-                    <!-- Сюда JS вставляет комнаты -->
-                </ul>
-            </div>
-        </aside>
+    <!-- ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <button id="create-room-btn">➕ Создать комнату</button>
+        </div>
 
-        <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
-        <main class="chat-main">
-            <div class="chat-header">
-                <h2 id="room-name">Комната: general</h2>
+        <div class="rooms-container">
+            <h3>Доступные комнаты:</h3>
+            <ul id="rooms-list">
+                <!-- Сюда JS вставляет комнаты динамически -->
+            </ul>
+        </div>
+    </aside>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
+    <main class="chat-main">
+        <div class="chat-header">
+            <h2 id="room-name">Загрузка комнаты...</h2>
+            <div class="header-buttons">
                 <button id="share-room-btn" style="display: none;">🔗 Ссылка</button>
                 <button id="back-to-general-btn" style="display: none;">🔙 В общий чат</button>
             </div>
+        </div>
 
-            <!-- Ваше старое окно чата и инпуты оставляем ниже без изменений -->
-            <div id="chat-window"></div>
-            <!-- ... блоки ввода сообщений ... -->
-        </main>
+        <!-- Окно отображения сообщений чата -->
+        <div id="chat-window"></div>
 
-    </div>
+        <!-- Панель ввода данных и отправки -->
+        <div class="input-panel">
+            <input type="text" id="username" placeholder="Ваше имя..." value="Юзер">
+            <div class="message-row">
+                <input type="text" id="message" placeholder="Введите сообщение...">
 
-    <div id="input-area">
-        <label for="file-input" class="file-label">📎</label>
-        <input type="file" id="file-input" accept="image/*,video/*">
+                <!-- Скрепка для загрузки файлов -->
+                <label for="file-input" class="file-label">📎</label>
+                <input type="file" id="file-input" style="display: none;">
 
-        <input type="text" id="username" placeholder="Имя" style="max-width: 80px;" value="Юзер">
-        <input type="text" id="message" placeholder="Сообщение...">
-        <button id="send-btn">Отправить</button>
-    </div>
+                <button id="send-btn">Отправить</button>
+            </div>
+        </div>
+    </main>
 
-    <!-- ✅ Добавили defer - скрипт выполнится после загрузки DOM -->
-    <script type="module" src="/app.js" defer></script>
+</div>
+
+<!-- Подключение главного скрипта приложения -->
+<script type="module" src="/app.js"></script>
 </body>
 </html>
