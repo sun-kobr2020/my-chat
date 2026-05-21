@@ -40,7 +40,22 @@ const chatWindow = document.getElementById('chat-window');
 const msgInput = document.getElementById('message');
 const userInput = document.getElementById('username');
 const sendBtn = document.getElementById('send-btn');
+// Находим ваш элемент выбора файла
 const fileInput = document.getElementById('file-input');
+
+if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.target?.files?.[0] || e.target.files[0];
+        if (!file) return;
+
+        // ВРЕМЕННАЯ ЗАГЛУШКА: вместо отправки в Firebase Storage
+        console.log(`Попытка загрузки файла: ${file.name} (Storage временно отключен)`);
+        alert("Загрузка файлов временно недоступна, так как Хранилище (Storage) ещё не подключено.");
+
+        // Обязательно очищаем инпут, чтобы не висел статус "Загружаю файл..."
+        fileInput.value = "";
+    });
+}
 
 // Проверка наличия элементов
 if (!chatWindow || !msgInput || !userInput || !sendBtn || !fileInput) {
@@ -135,40 +150,40 @@ async function sendMessage() {
     }
 }
 
-
-// ФУНКЦИЯ ЗАГРУЗКИ МЕДИАФАЙЛА ЧЕРЕЗ СКРЕПКУ
+// ФУНКЦИЯ ЗАГРУЗКИ МЕДИАФАЙЛА ЧЕРЕЗ СКРЕПКУ (РАБОЧАЯ ВЕРСИЯ)
 async function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     // Проверка размера (макс 10 МБ)
     if (file.size > 10 * 1024 * 1024) {
         alert("Файл слишком большой! Максимум 10 МБ");
         fileInput.value = "";
         return;
     }
-    
+
     const username = userInput.value.trim() || "Аноним";
     const folder = file.type.startsWith('image/') ? 'foto' : 'video';
-    
+
     // Создаем ссылку на будущий файл в облаке
     const fileRef = ref(storage, `${currentRoom}/${folder}/${Date.now()}_${file.name}`);
-    
+
     try {
+        // Блокируем ВСЁ на время загрузки, чтобы пользователь ничего не сломал
         msgInput.value = "📤 Загружаю файл...";
         msgInput.disabled = true;
-        sendBtn.disabled = true;
-        
+        sendBtn.disabled = true; // ВКЛЮЧАЕМ БЛОКИРОВКУ ОБРАТНО
+
         console.log("⬆️ Загрузка файла:", file.name);
-        
+
         // Загружаем байты файла в Storage
         const snapshot = await uploadBytes(fileRef, file);
         console.log("✅ Файл загружен в Storage");
-        
+
         // Получаем прямую вечную ссылку
         const downloadUrl = await getDownloadURL(snapshot.ref);
         console.log("✅ Получена ссылка:", downloadUrl);
-        
+
         // Записываем в базу данных чата
         await addDoc(messagesRef, {
             username: username,
@@ -177,14 +192,15 @@ async function handleFileUpload(e) {
             fileType: file.type,
             createdAt: serverTimestamp()
         });
-        
+
         console.log("✅ Сообщение с файлом добавлено в Firestore");
         msgInput.value = "";
     } catch (error) {
         console.error("❌ Ошибка Storage:", error);
         alert("Ошибка загрузки файла: " + error.message);
-        msgInput.value = "";
+        msgInput.value = ""; // Очищаем текст ошибки из инпута
     } finally {
+        // Блок finally СРАБОТАЕТ ВСЕГДА — интерфейс гарантированно разблокируется!
         msgInput.disabled = false;
         sendBtn.disabled = false;
         fileInput.value = "";
