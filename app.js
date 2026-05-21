@@ -1,7 +1,16 @@
 // Импортируем модули локально из папки firebase
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    query,
+    orderBy,
+    limit,
+    onSnapshot,
+    serverTimestamp
+} from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Конфигурация Firebase
 const firebaseConfig = {
@@ -96,31 +105,33 @@ onSnapshot(q, (snapshot) => {
     chatWindow.innerHTML = `<div style="padding: 20px; color: red;">Ошибка подключения: ${error.message}</div>`;
 });
 
-// ФУНКЦИЯ ОТПРАВКИ ТЕКСТА
+// Примерная структура вашей функции отправки
 async function sendMessage() {
     const text = msgInput.value.trim();
     const username = userInput.value.trim() || "Аноним";
-    
+
+    // Если поле сообщения пустое — ничего не делаем
     if (!text) return;
-    
-    const originalText = text;
-    msgInput.value = '';
-    sendBtn.disabled = true;
-    
+
     try {
+        sendBtn.disabled = true; // Блокируем именно вашу кнопку sendBtn
+
+        // Отправляем в коллекцию текущей комнаты (messagesRef)
         await addDoc(messagesRef, {
             username: username,
             text: text,
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp() // Используем верное поле из вашего слушателя
         });
+
+        msgInput.value = ""; // Очищаем ваше текстовое поле
     } catch (error) {
-        console.error("❌ Ошибка отправки:", error);
-        alert("Ошибка отправки: " + error.message);
-        msgInput.value = originalText;
+        console.error("Ошибка при отправке в Firebase:", error);
+        alert("Не удалось отправить сообщение: " + error.message);
     } finally {
-        sendBtn.disabled = false;
+        sendBtn.disabled = false; // Всегда возвращаем кнопку в рабочее состояние!
     }
 }
+
 
 // ФУНКЦИЯ ЗАГРУЗКИ МЕДИАФАЙЛА ЧЕРЕЗ СКРЕПКУ
 async function handleFileUpload(e) {
