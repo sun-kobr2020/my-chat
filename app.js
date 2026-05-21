@@ -210,3 +210,28 @@ function escapeHtml(text) {
 }
 
 console.log("✅ Чат инициализирован, комната:", currentRoom);
+
+// 1. Получаем новые элементы из HTML
+const createRoomBtn = document.getElementById('create-room-btn');
+const shareRoomBtn = document.getElementById('share-room-btn');
+
+// 2. Если комната не "general", показываем кнопку "Скопировать ссылку"
+if (currentRoomId !== 'general') {
+    shareRoomBtn.style.display = 'inline-block';
+}
+
+// 3. Логика кнопки "Создать приватную комнату"
+createRoomBtn.addEventListener('click', () => {
+    // Генерируем случайную строку (например: rm-8f2b1c9a)
+    const randomRoomId = 'rm-' + Math.random().toString(16).substring(2, 10);
+
+    // Перенаправляем пользователя в новую комнату
+    window.location.search = `?room=${randomRoomId}`;
+});
+
+// 4. Логика кнопки "Скопировать ссылку"
+shareRoomBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('Ссылка на приватную комнату скопирована в буфер обмена!'))
+        .catch(err => console.error('Не удалось скопировать:', err));
+});
