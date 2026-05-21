@@ -43,18 +43,9 @@ const sendBtn = document.getElementById('send-btn');
 // Находим ваш элемент выбора файла
 const fileInput = document.getElementById('file-input');
 
+// Находим инпут и привязываем новую функцию Base64 загрузки
 if (fileInput) {
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.target?.files?.[0] || e.target.files[0];
-        if (!file) return;
-
-        // ВРЕМЕННАЯ ЗАГЛУШКА: вместо отправки в Firebase Storage
-        console.log(`Попытка загрузки файла: ${file.name} (Storage временно отключен)`);
-        alert("Загрузка файлов временно недоступна, так как Хранилище (Storage) ещё не подключено.");
-
-        // Обязательно очищаем инпут, чтобы не висел статус "Загружаю файл..."
-        fileInput.value = "";
-    });
+    fileInput.addEventListener('change', handleFileUpload);
 }
 
 // Проверка наличия элементов
@@ -150,57 +141,53 @@ async function sendMessage() {
     }
 }
 
-// ФУНКЦИЯ ЗАГРУЗКИ МЕДИАФАЙЛА ЧЕРЕЗ СКРЕПКУ (РАБОЧАЯ ВЕРСИЯ)
+// ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛОВ ЧЕРЕЗ BASE64 (РАБОТАЕТ БЕЗ STORAGE)
 async function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Проверка размера (макс 10 МБ)
-    if (file.size > 10 * 1024 * 1024) {
-        alert("Файл слишком большой! Максимум 10 МБ");
+    // Ограничение: для текстовой базы данных файлы должны быть небольшими (до 700 КБ)
+    if (file.size > 700 * 1024) {
+        alert("Без облачного хранилища можно отправлять файлы только до 700 КБ!");
         fileInput.value = "";
         return;
     }
 
     const username = userInput.value.trim() || "Аноним";
-    const folder = file.type.startsWith('image/') ? 'foto' : 'video';
-
-    // Создаем ссылку на будущий файл в облаке
-    const fileRef = ref(storage, `${currentRoom}/${folder}/${Date.now()}_${file.name}`);
 
     try {
-        // Блокируем ВСЁ на время загрузки, чтобы пользователь ничего не сломал
-        msgInput.value = "📤 Загружаю файл...";
+        // Блокируем интерфейс на долю секунды, пока браузер читает файл
+        msgInput.value = "📤 Кодирую файл...";
         msgInput.disabled = true;
-        sendBtn.disabled = true; // ВКЛЮЧАЕМ БЛОКИРОВКУ ОБРАТНО
+        sendBtn.disabled = true;
 
-        console.log("⬆️ Загрузка файла:", file.name);
+        // Читаем файл и превращаем его в текстовую строку URL
+        const base64String = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+        });
 
-        // Загружаем байты файла в Storage
-        const snapshot = await uploadBytes(fileRef, file);
-        console.log("✅ Файл загружен в Storage");
+        console.log("✅ Файл успешно сконвертирован локально");
 
-        // Получаем прямую вечную ссылку
-        const downloadUrl = await getDownloadURL(snapshot.ref);
-        console.log("✅ Получена ссылка:", downloadUrl);
-
-        // Записываем в базу данных чата
+        // Записываем данные прямо в нашу рабочую базу Firestore!
         await addDoc(messagesRef, {
             username: username,
             text: `Отправил файл: ${file.name}`,
-            fileUrl: downloadUrl,
+            fileUrl: base64String, // Текстовый код файла вместо ссылки на Storage
             fileType: file.type,
             createdAt: serverTimestamp()
         });
 
-        console.log("✅ Сообщение с файлом добавлено в Firestore");
+        console.log("✅ Сообщение с локальным файлом добавлено в Firestore");
         msgInput.value = "";
     } catch (error) {
-        console.error("❌ Ошибка Storage:", error);
-        alert("Ошибка загрузки файла: " + error.message);
-        msgInput.value = ""; // Очищаем текст ошибки из инпута
+        console.error("❌ Ошибка при обработке файла:", error);
+        alert("Не удалось отправить файл: " + error.message);
+        msgInput.value = "";
     } finally {
-        // Блок finally СРАБОТАЕТ ВСЕГДА — интерфейс гарантированно разблокируется!
+        // Интерфейс разблокируется в любом случае!
         msgInput.disabled = false;
         sendBtn.disabled = false;
         fileInput.value = "";
