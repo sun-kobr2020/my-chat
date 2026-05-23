@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мессенджер комнат</title>
-  <script type="module" crossorigin src="/my-chat/assets/index-IdhJCtH_.js"></script>
-  <link rel="stylesheet" crossorigin href="/my-chat/assets/index-xmPg5yxn.css">
+  <script type="module" crossorigin src="/my-chat/assets/index-e9C0hxKP.js"></script>
+  <link rel="stylesheet" crossorigin href="/my-chat/assets/index-CsdvQKWh.css">
 </head>
 <body>
 
@@ -42,10 +42,17 @@
         <div class="input-panel">
             <input type="text" id="username" placeholder="Ваше имя..." value="Юзер">
 
-            <!-- ВСТАВЛЯЕМ БЛОК ПРЕВЬЮ ФАЙЛА СЮДА -->
-            <div id="file-preview-zone" style="display: none; padding: 5px 10px; background: #eef2f3; border-radius: 5px; font-size: 13px; color: #555; margin-bottom: 5px;">
-                <span id="file-preview-name">📎 Файл: </span>
-                <button id="cancel-file-btn" style="background: none; border: none; color: red; cursor: pointer; font-weight: bold; margin-left: 10px;">❌</button>
+            <div id="file-preview-zone">
+                <!-- Строка: имя файла + крестик -->
+                <div class="preview-row">
+                    <span id="file-preview-name">📎 Файл: </span>
+                    <button id="cancel-file-btn">❌</button>
+                </div>
+                <!-- Прогресс-бар -->
+                <div id="progress-container">
+                    <div id="progress-bar"></div>
+                    <span id="progress-text">0%</span>
+                </div>
             </div>
 
             <div class="message-row">
@@ -53,7 +60,7 @@
 
                 <!-- Скрепка для загрузки файлов -->
                 <label for="file-input" class="file-label">📎</label>
-                <input type="file" id="file-input" style="display: none;" multiple>
+                <input type="file" id="file-input" accept="image/*,video/*,.pdf,.doc,.docx,.zip,.rar" multiple style="display: none;">
 
                 <button id="send-btn">Отправить</button>
             </div>
