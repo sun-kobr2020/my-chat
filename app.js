@@ -308,7 +308,20 @@ async function handleFileUpload(e) {
         previewName.innerText = `⏳ Подготовка к загрузке...`;
     }
 
-    const cleanServerUrl = new URL('/api/upload', import.meta.env.VITE_FILE_SERVER_URL).href;
+    // ДИНАМИЧЕСКОЕ ПОЛУЧЕНИЕ АДРЕСА СЕРВЕРА ИЗ БАЗЫ
+    let cleanServerUrl = '';
+    try {
+        const { getDoc, doc } = await import("firebase/firestore");
+        const configDoc = await getDoc(doc(db, "system", "config"));
+        if (configDoc.exists()) {
+            cleanServerUrl = configDoc.data().backendUrl + '/api/upload';
+        } else {
+            throw new Error('Документ с адресом сервера не найден');
+        }
+    } catch (err) {
+        throw new Error(`Не удалось получить адрес сервера хранилища: ${err.message}`);
+    }
+
     const uploadedFilesTemp = [];
 
     try {

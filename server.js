@@ -204,6 +204,36 @@ process.on('unhandledRejection', (err) => {
     console.error('unhandledRejection:', err);
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`=== Безопасный сервер запущен на порту ${PORT} ===`);
+const localtunnel = require('localtunnel');
+const admin = require('firebase-admin');
+
+// 1. Инициализация Firebase Admin (нужно скачать JSON-ключ из настроек Firebase Console -> Service Accounts)
+const serviceAccount = require('./firebase-key.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+const db = admin.firestore();
+
+// 2. Запуск сервера и туннеля
+app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`=== Локальный сервер запущен на порту ${PORT} ===`);
+
+    try {
+        // Создаем туннель программно
+        const tunnel = await localtunnel({ port: PORT });
+        console.log(`🌍 НОВЫЙ АДРЕС СЕРВЕРА: ${tunnel.url}`);
+
+        // Записываем этот адрес в Firebase Firestore!
+        await db.collection('system').doc('config').set({
+            backendUrl: tunnel.url,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        console.log(`✅ Адрес успешно обновлен в базе данных!`);
+
+        tunnel.on('close', () => {
+            console.log('Туннель закрыт.');
+        });
+    } catch (err) {
+        console.error('Ошибка создания туннеля:', err);
+    }
 });
