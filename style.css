@@ -405,3 +405,150 @@ button {
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* --- ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ АВТОРИЗАЦИИ --- */
+/* 1. ДЕФОЛТНОЕ СОСТОЯНИЕ (Когда страница только загружается) */
+/* Форма входа изначально всегда скрыта, чтобы не было моргания */
+/* При старте страницы полностью скрываем оба контейнера */
+#auth-container,
+#app-container {
+    display: none !important;
+}
+
+/* Чат изначально считает, что пользователь авторизован, и готов к работе */
+#app-container {
+    display: block; /* Если у вас была сетка flex или grid, укажите их вместо block */
+}
+
+
+/* 2. АКТИВНЫЙ РЕЖИМ АВТОРИЗАЦИИ (Включается через JS, если токена нет) */
+
+/* Если на body ЕСТЬ класс auth-mode, полностью скрываем чат */
+body.auth-mode #app-container {
+    display: none !important;
+}
+
+/* Если JS добавил класс 'auth-mode' — плавно и красиво показываем форму входа */
+body.auth-mode #auth-container {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #f4f6f9;
+}
+
+/* Если JS добавил класс 'chat-mode' — показываем структуру чата */
+body.chat-mode #app-container {
+    display: block !important; /* Если у вас flex/grid сетка, замените block на flex или grid */
+}
+
+/* --- СТИЛИЗАЦИЯ ФОРМЫ ВХОДА --- */
+.auth-card {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-card h2 {
+    margin: 0 0 20px 0;
+    text-align: center;
+    color: #333;
+    font-family: sans-serif;
+}
+
+.auth-input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.auth-input-group label {
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #666;
+    font-family: sans-serif;
+}
+
+.auth-input-group input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    outline: none;
+}
+
+.auth-input-group input:focus {
+    border-color: #007bff;
+}
+
+#auth-submit-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+#auth-submit-btn:hover {
+    background-color: #0056b3;
+}
+
+.auth-toggle-text {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+    color: #555;
+    font-family: sans-serif;
+}
+
+#auth-toggle-mode-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* --- КНОПКА ВЫХОДА ВНУТРИ ЧАТА --- */
+.logout-button {
+    width: 100%;                  /* Кнопка растянется по ширине панели */
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 15px;          /* Отступ снизу, чтобы не прилипать к «Создать комнату» */
+    transition: background-color 0.2s, transform 0.1s;
+    box-sizing: border-box;       /* Чтобы паддинги не взрывали ширину */
+}
+
+.logout-button:hover {
+    background-color: #bd2130;
+}
+
+.logout-button:active {
+    transform: scale(0.98);       /* Эффект нажатия */
+}
+
+/* Выводим значок reCAPTCHA на передний план */
+.grecaptcha-badge {
+    z-index: 9999 !important;
+}
