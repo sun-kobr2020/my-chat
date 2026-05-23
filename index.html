@@ -4,71 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мессенджер комнат</title>
-  <script type="module" crossorigin src="/my-chat/assets/index-B0hylPnU.js"></script>
-  <link rel="stylesheet" crossorigin href="/my-chat/assets/index-CsdvQKWh.css">
+  <script type="module" crossorigin src="/my-chat/assets/index-DxqpQ7AJ.js"></script>
+  <link rel="stylesheet" crossorigin href="/my-chat/assets/index-dL939Hu1.css">
 </head>
-<body>
 
-<div class="app-layout">
+<body> <!-- Класс auth-mode управляет видимостью через CSS -->
 
-    <!-- ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <button id="create-room-btn">➕ Создать комнату</button>
+<!-- БЛОК АВТОРИЗАЦИИ (Показывается первым) -->
+<div id="auth-container">
+    <form id="auth-form" class="auth-card">
+        <h2 id="auth-title">Вход в чат</h2>
+
+        <div class="auth-input-group">
+            <label for="auth-email">Email</label>
+            <input type="email" id="auth-email" required placeholder="example@mail.com">
         </div>
 
-        <div class="rooms-container">
-            <h3>Доступные комнаты:</h3>
-            <ul id="rooms-list">
-                <!-- Сюда JS вставляет комнаты динамически -->
-            </ul>
-        </div>
-    </aside>
-
-    <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
-    <main class="chat-main">
-        <div class="chat-header">
-            <h2 id="room-name">Загрузка комнаты...</h2>
-            <div class="header-buttons">
-                <button id="share-room-btn" style="display: none;">🔗 Ссылка</button>
-                <button id="back-to-general-btn" style="display: none;">🔙 В общий чат</button>
-            </div>
+        <div class="auth-input-group">
+            <label for="auth-password">Пароль</label>
+            <input type="password" id="auth-password" required placeholder="••••••••">
         </div>
 
-        <!-- Окно отображения сообщений чата -->
-        <div id="chat-window"></div>
+        <button type="submit" id="auth-submit-btn">Войти</button>
 
-        <!-- Панель ввода данных и отправки -->
-        <div class="input-panel">
-            <input type="text" id="username" placeholder="Ваше имя..." value="Юзер">
-
-            <div id="file-preview-zone">
-                <!-- Строка: имя файла + крестик -->
-                <div class="preview-row">
-                    <span id="file-preview-name">📎 Файл: </span>
-                    <button id="cancel-file-btn">❌</button>
-                </div>
-                <!-- Прогресс-бар -->
-                <div id="progress-container">
-                    <div id="progress-bar"></div>
-                    <span id="progress-text">0%</span>
-                </div>
-            </div>
-
-            <div class="message-row">
-                <input type="text" id="message" placeholder="Введите сообщение...">
-
-                <!-- Скрепка для загрузки файлов -->
-                <label for="file-input" class="file-label">📎</label>
-                <input type="file" id="file-input" accept="image/*,video/*,.pdf,.doc,.docx,.zip,.rar" multiple style="display: none;">
-
-                <button id="send-btn">Отправить</button>
-            </div>
+        <div class="auth-toggle-text">
+            <span id="auth-switch-desc">Ещё нет аккаунта?</span>
+            <button type="button" id="auth-toggle-mode-btn">Зарегистрироваться</button>
         </div>
-    </main>
-
+    </form>
 </div>
 
-<!-- Подключение главного скрипта приложения -->
+<!-- БЛОК ЧАТА (Ваш текущий код оборачивается сюда) -->
+<div id="app-container">
+    <div class="app-layout">
+
+        <!-- ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) -->
+        <aside class="sidebar">
+            <button id="logout-btn" class="logout-button">🚪 Выйти из аккаунта</button>
+            <div class="sidebar-header">
+                <button id="create-room-btn">➕ Создать комнату</button>
+            </div>
+
+            <div class="rooms-container">
+                <h3>Доступные комнаты:</h3>
+                <ul id="rooms-list">
+                    <!-- Сюда JS вставляет комнаты динамически -->
+                </ul>
+            </div>
+        </aside>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ (ЧАТ) -->
+        <main class="chat-main">
+            <div class="chat-header">
+                <h2 id="room-name">Загрузка комнаты...</h2>
+                <div class="header-buttons">
+                    <button id="share-room-btn" style="display: none;">🔗 Ссылка</button>
+                    <button id="back-to-general-btn" style="display: none;">🔙 В общий чат</button>
+                </div>
+            </div>
+
+            <!-- Окно отображения сообщений чата -->
+            <div id="chat-window"></div>
+
+            <!-- Панель ввода данных и отправки -->
+            <div class="input-panel">
+                <input type="text" id="username" placeholder="Ваше имя..." value="Юзер">
+
+                <div id="file-preview-zone">
+                    <!-- Строка: имя файла + крестик -->
+                    <div class="preview-row">
+                        <span id="file-preview-name">📎 Файл: </span>
+                        <button id="cancel-file-btn">❌</button>
+                    </div>
+                    <!-- Прогресс-бар -->
+                    <div id="progress-container">
+                        <div id="progress-bar"></div>
+                        <span id="progress-text">0%</span>
+                    </div>
+                </div>
+
+                <div class="message-row">
+                    <input type="text" id="message" placeholder="Введите сообщение...">
+
+                    <!-- Скрепка для загрузки файлов -->
+                    <label for="file-input" class="file-label">📎</label>
+                    <input type="file" id="file-input" accept="image/*,video/*,.pdf,.doc,.docx,.zip,.rar" multiple style="display: none;">
+
+                    <button id="send-btn">Отправить</button>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Подключение главного скрипта приложения -->
+</div>
+
 </body>
 </html>
