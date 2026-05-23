@@ -215,25 +215,43 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // 2. Запуск сервера и туннеля
-app.listen(PORT, '0.0.0.0', async () => {
+const { exec } = require('child_process');
+
+// 2. Запуск сервера и автоматического SSH-туннеля localhost.run
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`=== Локальный сервер запущен на порту ${PORT} ===`);
 
     try {
-        // Создаем туннель программно
-        const tunnel = await localtunnel({ port: PORT });
-        console.log(`🌍 НОВЫЙ АДРЕС СЕРВЕРА: ${tunnel.url}`);
+        // Запускаем ssh-туннель программно (подставляем ваш PORT)
+        const sshProcess = exec(`ssh -R 80:127.0.0.1:${PORT} nokey@localhost.run`);
 
-        // Записываем этот адрес в Firebase Firestore!
-        await db.collection('system').doc('config').set({
-            backendUrl: tunnel.url,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-        console.log(`✅ Адрес успешно обновлен в базе данных!`);
+        sshProcess.stdout.on('data', async (data) => {
+            // Ищем регулярным выражением ссылку lhr.life в выводе терминала
+            const match = data.match(/https:\/\/[a-z0-9]+\.lhr\.life/);
 
-        tunnel.on('close', () => {
-            console.log('Туннель закрыт.');
+            if (match) {
+                const serverUrl = match[0];
+                console.log(`🌍 НОВЫЙ АДРЕС СЕРВЕРА (localhost.run): ${serverUrl}`);
+
+                // Записываем этот адрес в Firebase Firestore!
+                await db.collection('system').doc('config').set({
+                    backendUrl: serverUrl,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+                console.log(`✅ Адрес успешно обновлен в базе данных!`);
+            }
         });
+
+        sshProcess.stderr.on('data', (data) => {
+            // Если соединение разрывается или запрашивает Host Key
+            if (data.includes('Are you sure you want to continue connecting')) {
+                sshProcess.stdin.write('yes\n');
+            }
+        });
+
+        process.on('exit', () => sshProcess.kill());
+
     } catch (err) {
-        console.error('Ошибка создания туннеля:', err);
+        console.error('Ошибка создания SSH-туннеля:', err);
     }
 });
