@@ -46,6 +46,8 @@ const fileInput = document.getElementById('file-input');
 const previewZone = document.getElementById('file-preview-zone');
 const previewName = document.getElementById('file-preview-name');
 const cancelFileBtn = document.getElementById('cancel-file-btn');
+const progressContainer = document.getElementById('progress-container');
+const progressBar = document.getElementById('progress-bar');
 
 // Проверка наличия критических элементов
 if (!chatWindow || !msgInput || !userInput || !sendBtn || !fileInput) {
@@ -149,7 +151,7 @@ async function sendMessage() {
 
         // Меняем статус плашки на отправку в облако Firestore
         if (previewZone && attachedFilesList.length > 0) {
-            previewZone.style.background = "#e3f2fd"; // Синеватый оттенок
+            previewZone.className = 'state-loading'; // Синеватый оттенок
             previewName.innerHTML = `🚀 Отправка в чат... (${attachedFilesList.length} шт.)`;
         }
 
@@ -176,14 +178,14 @@ async function sendMessage() {
         attachedFilesList = [];
         if (previewZone) {
             previewZone.style.display = 'none';
-            previewZone.style.background = "#eef2f3"; // Сброс к дефолту
+            previewZone.className = ''; // Сброс к дефолту
         }
         msgInput.placeholder = "Введите сообщение...";
 
     } catch (error) {
         console.error("Ошибка при отправке в Firebase:", error);
         if (previewZone) {
-            previewZone.style.background = "#ffebee"; // Красный цвет ошибки
+            previewZone.className = 'state-error'; // Красный цвет ошибки
             previewName.innerHTML = `❌ Ошибка публикации: ${error.message}`;
         } else {
             alert("Не удалось отправить сообщение: " + error.message);
@@ -193,26 +195,117 @@ async function sendMessage() {
     }
 }
 
+// Загрузка одного файла через XHR с поддержкой прогресса
+function uploadFileWithProgress(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('chatFile', file);
+
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                onProgress(percent);
+            }
+        });
+
+        xhr.addEventListener('load', () => {
+            let result;
+            try {
+                result = JSON.parse(xhr.responseText);
+            } catch {
+                reject(new Error(`Сервер вернул не JSON: ${xhr.responseText.slice(0, 200)}`));
+                return;
+            }
+            if (xhr.status < 200 || xhr.status >= 300) {
+                reject(new Error(result.error || `Ошибка сервера: ${xhr.status}`));
+                return;
+            }
+            if (!result.fileUrl) {
+                reject(new Error(`Сервер не вернул fileUrl для файла ${file.name}`));
+                return;
+            }
+            resolve(result);
+        });
+
+        xhr.addEventListener('error', () => {
+            reject(new Error(`Сетевая ошибка при загрузке файла ${file.name}`));
+        });
+
+        xhr.addEventListener('abort', () => {
+            reject(new Error(`Загрузка файла ${file.name} прервана`));
+        });
+
+        xhr.open('POST', url);
+        xhr.send(formData);
+    });
+}
+
 // ФУНКЦИЯ ЗАГРУЗКИ ФАЙЛОВ НА СОБСТВЕННЫЙ СЕРВЕР
 async function handleFileUpload(e) {
-    // ВАЖНО: копируем FileList в обычный массив ДО очистки input
     const files = Array.from(e.target.files || []);
-
     if (files.length === 0) return;
 
-    // Теперь можно очищать input, массив files уже сохранён
-    fileInput.value = "";
+    // ============================================
+    // ПРОВЕРКА НА КЛИЕНТЕ ДО НАЧАЛА ЗАГРУЗКИ
+    // ============================================
+    const allowedExtensions = [
+        // Изображения
+        '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp',
+        // Видео
+        '.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv',
+        // Архивы
+        '.zip', '.rar', '.7z', '.tar', '.gz',
+        // Документы
+        '.pdf',
+        '.doc', '.docx',
+        '.xls', '.xlsx',
+        '.ppt', '.pptx',
+        '.txt', '.csv'
+    ];
 
+    const forbiddenFiles = files.filter(file => {
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        return !allowedExtensions.includes(ext);
+    });
+
+    if (forbiddenFiles.length > 0) {
+        const names = forbiddenFiles.map(f => f.name).join(', ');
+        // Показываем ошибку мгновенно без единого байта загрузки
+        if (previewZone) {
+            previewZone.style.display = 'flex';
+            previewZone.className = 'state-error';
+        }
+        if (previewName) {
+            previewName.innerText = `❌ Запрещённый тип файла: ${names}`;
+        }
+        fileInput.value = "";
+        return; // Выходим — загрузка не начинается!
+    }
+    // ============================================
+
+    fileInput.value = "";
     msgInput.disabled = true;
     sendBtn.disabled = true;
 
+    // Получаем элементы прогресс-бара
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar       = document.getElementById('progress-bar');
+    const progressText      = document.getElementById('progress-text');
+
+    // Показываем зону превью
     if (previewZone) {
-        previewZone.style.display = 'block';
-        previewZone.style.background = "#eef2f3";
+        previewZone.style.display = 'flex';
+        previewZone.className = 'state-loading';
     }
 
+    // Показываем прогресс-бар и сбрасываем значения
+    if (progressContainer) progressContainer.style.display = 'block';
+    if (progressBar)       progressBar.style.width = '0%';
+    if (progressText)      progressText.textContent = '0%';
+
     if (previewName) {
-        previewName.innerText = `⏳ Отправка на ваш сервер: 0 из ${files.length}...`;
+        previewName.innerText = `⏳ Подготовка к загрузке...`;
     }
 
     const cleanServerUrl = new URL('/api/upload', import.meta.env.VITE_FILE_SERVER_URL).href;
@@ -223,72 +316,56 @@ async function handleFileUpload(e) {
             const currentFile = files[i];
 
             if (previewName) {
-                previewName.innerText = `⏳ Отправка на ваш сервер: ${i + 1} из ${files.length} (${currentFile.name})...`;
+                previewName.innerText = `⏳ Файл ${i + 1} из ${files.length}: ${currentFile.name}`;
             }
 
-            const formData = new FormData();
-            formData.append('chatFile', currentFile);
-
-            const response = await fetch(cleanServerUrl, {
-                method: 'POST',
-                body: formData,
-            });
-
-            const rawText = await response.text();
-
-            let result;
-            try {
-                result = JSON.parse(rawText);
-            } catch {
-                throw new Error(`Сервер вернул не JSON: ${rawText.slice(0, 200)}`);
-            }
-
-            console.log("📦 Ответ сервера:", result);
-
-            if (!response.ok) {
-                throw new Error(result.error || `Не удалось загрузить файл ${currentFile.name}`);
-            }
-
-            if (!result.fileUrl) {
-                throw new Error(`Сервер не вернул fileUrl для файла ${currentFile.name}`);
-            }
+            const uploadResult = await uploadFileWithProgress(
+                cleanServerUrl,
+                currentFile,
+                (filePercent) => {
+                    const overall = Math.round(
+                        ((i / files.length) * 100) + (filePercent / files.length)
+                    );
+                    if (progressBar)  progressBar.style.width  = overall + '%';
+                    if (progressText) progressText.textContent = overall + '%';
+                }
+            );
 
             uploadedFilesTemp.push({
-                fileUrl: result.fileUrl,
-                fileType: result.fileType || currentFile.type || 'application/octet-stream',
-                fileName: result.fileName || currentFile.name
+                fileUrl:  uploadResult.fileUrl,
+                fileType: uploadResult.fileType || currentFile.type || 'application/octet-stream',
+                fileName: uploadResult.fileName || currentFile.name
             });
         }
+
+        // Все файлы загружены — 100%
+        if (progressBar)  progressBar.style.width  = '100%';
+        if (progressText) progressText.textContent = '100%';
 
         attachedFilesList = uploadedFilesTemp;
 
-        if (previewZone) {
-            previewZone.style.background = "#e8f5e9";
-        }
-
+        if (previewZone) previewZone.className = 'state-success';
         if (previewName) {
-            previewName.innerHTML = `✅ Файлы на сервере! Готово к отправке: <b>${attachedFilesList.length} шт.</b>`;
+            previewName.innerHTML = `✅ Готово: <b>${attachedFilesList.length} файл(ов)</b> — нажми «Отправить»`;
         }
 
-        console.log("✅ Файлы готовы к отправке в Firestore:", attachedFilesList);
+        setTimeout(() => {
+            if (progressContainer) progressContainer.style.display = 'none';
+        }, 1500);
 
+        console.log("✅ Файлы готовы:", attachedFilesList);
         msgInput.focus();
 
     } catch (error) {
         console.error("Ошибка загрузки:", error);
-
         attachedFilesList = [];
 
-        if (previewZone) {
-            previewZone.style.background = "#ffebee";
-        }
+        if (previewZone) previewZone.className = 'state-error';
+        if (previewName) previewName.innerText = `❌ Ошибка: ${error.message}`;
 
-        if (previewName) {
-            previewName.innerText = `❌ Ошибка диска: ${error.message}`;
-        }
     } finally {
         msgInput.disabled = false;
-        sendBtn.disabled = false;
+        sendBtn.disabled  = false;
     }
 }
 

@@ -65,7 +65,7 @@ const uploadLimiter = rateLimit({
 // ============================
 // Определение подпапки по mimetype
 // ============================
-function getSubFolder(mimetype) {
+function getSubFolder(mimetype, originalName = '') {
     if (mimetype.startsWith('image/')) return 'images';
     if (mimetype.startsWith('video/')) return 'videos';
 
@@ -74,6 +74,9 @@ function getSubFolder(mimetype) {
         'application/zip',
         'application/x-zip-compressed',
         'application/x-rar-compressed',
+        'application/vnd.rar',
+        'application/x-rar',
+        'application/rar',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel',
@@ -82,11 +85,28 @@ function getSubFolder(mimetype) {
         'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
 
-    if (mimetype.startsWith('text/') || allowedDocs.includes(mimetype)) {
+    // Расширения как запасной вариант когда браузер даёт octet-stream
+    const allowedExtsByExt = [
+        '.zip', '.rar', '.7z', '.tar', '.gz',
+        '.pdf',
+        '.doc', '.docx',
+        '.xls', '.xlsx',
+        '.ppt', '.pptx',
+        '.txt', '.csv'
+    ];
+
+    const ext = '.' + originalName.split('.').pop().toLowerCase();
+
+    if (
+        mimetype.startsWith('text/') ||
+        allowedDocs.includes(mimetype) ||
+        // Если MIME = octet-stream но расширение разрешено
+        (mimetype === 'application/octet-stream' && allowedExtsByExt.includes(ext))
+    ) {
         return 'documents';
     }
 
-    return null; // .exe, .bat, .sh и прочее — запрещено
+    return null;
 }
 
 // ============================
@@ -94,7 +114,7 @@ function getSubFolder(mimetype) {
 // ============================
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const subFolder = getSubFolder(file.mimetype);
+        const subFolder = getSubFolder(file.mimetype, file.originalname);
         const targetDir = path.join(baseUploadDir, subFolder);
         if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir, { recursive: true });
@@ -118,7 +138,7 @@ const upload = multer({
         fileSize: 300 * 1024 * 1024 // абсолютный потолок 300 МБ
     },
     fileFilter: (req, file, cb) => {
-        const folder = getSubFolder(file.mimetype);
+        const folder = getSubFolder(file.mimetype, file.originalname);
         const sizeInBytes = parseInt(req.headers['content-length']) || 0;
 
         if (!folder) {
@@ -154,7 +174,7 @@ app.post('/api/upload', uploadLimiter, (req, res) => {
             return res.status(400).json({ error: 'Файл не выбран' });
         }
 
-        const subFolder = getSubFolder(req.file.mimetype);
+        const subFolder = getSubFolder(req.file.mimetype, req.file.originalname);
         const protocol = req.headers['x-forwarded-proto'] || 'http';
         const host = req.headers['x-forwarded-host'] || req.get('host');
         const fileUrl = `${protocol}://${host}/uploads/${subFolder}/${req.file.filename}`;

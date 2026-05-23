@@ -283,3 +283,125 @@ button {
 #send-btn:hover {
     background-color: #1b4332;
 }
+
+/* ===== ПРЕВЬЮ ФАЙЛА И ПРОГРЕСС-БАР ===== */
+
+#file-preview-zone {
+    display: none; /* скрыт по умолчанию, js меняет на flex */
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px 12px;
+    background: #eef2f3;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 5px;
+    width: 100%;
+    border: 1px solid #d0d7de;
+    transition: background-color 0.3s ease;
+}
+
+/* Строка с именем файла и крестиком */
+#file-preview-zone .preview-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+#file-preview-name {
+    flex: 1;
+    font-size: 13px;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#cancel-file-btn {
+    background: none;
+    border: none;
+    color: #e53935;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin-left: 10px;
+    padding: 0;
+    line-height: 1;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+#cancel-file-btn:hover {
+    transform: scale(1.2);
+}
+
+/* Контейнер прогресс-бара */
+#progress-container {
+    display: none; /* js переключает на block */
+    width: 100%;
+    background-color: #d0d7de;
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+/* Заполняемая полоса */
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #2d6a4f, #52b788);
+    border-radius: 4px;
+    transition: width 0.25s ease;
+}
+
+/* Текст процентов под баром */
+#progress-text {
+    font-size: 11px;
+    color: #888;
+    text-align: right;
+    display: block;
+}
+
+/* === Состояния зоны превью === */
+
+/* Загрузка — голубоватый */
+#file-preview-zone.state-loading {
+    background-color: #e3f2fd;
+    border-color: #90caf9;
+}
+
+/* Загрузка — анимация shimmer на полосе */
+#file-preview-zone.state-loading #progress-bar {
+    background: linear-gradient(
+            90deg,
+            #2d6a4f 25%,
+            #52b788 50%,
+            #2d6a4f 75%
+    );
+    background-size: 200% 100%;
+    animation: progress-shimmer 1.5s infinite linear;
+}
+
+/* Успех — зелёный */
+#file-preview-zone.state-success {
+    background-color: #e8f5e9;
+    border-color: #52b788;
+}
+
+/* Ошибка — красный */
+#file-preview-zone.state-error {
+    background-color: #ffebee;
+    border-color: #e53935;
+}
+
+/* Ошибка — красная полоса */
+#file-preview-zone.state-error #progress-bar {
+    background: linear-gradient(90deg, #e53935, #ef9a9a);
+}
+
+@keyframes progress-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
