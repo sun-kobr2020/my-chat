@@ -46,11 +46,18 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Активация невидимой защиты от ботов reCAPTCHA v3
-self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+// Автоматически включаем дебаг-токен ТОЛЬКО на локальном компьютере
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    console.log("ℹ️ App Check запущен в режиме отладки (Localhost)");
+}
+
+// Инициализация App Check
 const appCheck = initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
-    isTokenAutoRefreshEnabled: true // Автоматическое обновление токенов безопасности
+    isTokenAutoRefreshEnabled: true
 });
+
 
 
 // Логика комнат и URL
