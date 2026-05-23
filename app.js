@@ -232,9 +232,6 @@ async function handleFileUpload(e) {
             const response = await fetch(cleanServerUrl, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'bypass-tunnel-reminder': 'true'
-                }
             });
 
             const rawText = await response.text();
