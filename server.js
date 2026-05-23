@@ -184,6 +184,6 @@ process.on('unhandledRejection', (err) => {
     console.error('unhandledRejection:', err);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`=== Безопасный сервер запущен на порту ${PORT} ===`);
 });
