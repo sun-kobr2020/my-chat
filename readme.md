@@ -1,148 +1,111 @@
-Я разрабатываю веб-чат на Vite + Firebase (Firestore) с собственным файловым сервером на Express + Multer (Node.js). 
-В проект внедрена полная автоматизация динамических адресов сервера.
-
-Описание проекта
+# Я разрабатываю веб-чат на Vite + Firebase (Firestore + Auth + App Check) с собственным файловым сервером на Express + Multer (Node.js). 
+# В проект внедрена автоматизация динамических адресов и многоуровневая система безопасности.
+# Структура проекта: 
+# Веб-чат на Vite + Firebase с собственным файловым сервером на Express
 
 Этот проект представляет собой полнофункциональный веб-чат, разработанный с использованием современных технологий:
-Фронтенд: Vite, Firebase SDK (Firestore)
-Бэкенд: Node.js, Express, Multer
-База данных: Firebase Firestore
-Автоматизация: Динамические адреса сервера, автоматическое обновление в Firestore
-Структура проекта
-index.html: Разметка пользовательского интерфейса (UI).
-app.js: Клиентская логика (ES-модули, Vite, Firebase SDK).
-style.css: Стили приложения (инлайн-стили отсутствуют).
-server.js: Express-сервер для загрузки и раздачи файлов.
-.env: Переменные окружения фронтенда (VITE_*).
-Реализованный функционал
 
-1. Автоматизация адреса сервера и сетевая архитектура
-Программный туннель: Сервер Express (порт 5000) запускает фоновый процесс ssh -R 80:127.0.0.1:5000 nokey@localhost.run для создания публичного адреса. 
-Обработка проверки ключей хоста автоматизирована.
-Синхронизация адреса: Сервер парсит логи терминала, извлекает динамический URL (https://[id].lhr.life) и автоматически обновляет его в Firebase Firestore:
+*   **Frontend:** Vite, Firebase SDK (Firestore, Auth, App Check), ES-модули.
+*   **Backend:** Node.js, Express, Multer, Firebase Admin SDK.
 
-javascript
+## Особенности
 
-db.collection('system').doc('config').set({
+*   **Динамическая адресация:** Автоматическая генерация и обновление уникальных адресов для каждой сессии чата.
+*   **Многоуровневая безопасность:** Firebase Authentication, Firebase App Check (Google reCAPTCHA v3), строгие правила Firestore.
+*   **Пользовательский файловый сервер:** Отправка и раздача файлов через Express.js с использованием Multer.
+*   **Плавный UI:** Отсутствие мерцания интерфейса при переключении состояний благодаря CSS-классам и управлению видимостью контейнеров.
+*   **Надежная работа с данными:** Realtime-подписка на изменения в Firestore, безопасное управление сессиями.
+*   **Валидация файлов:** Клиентская и серверная проверка типов и размеров загружаемых файлов.
 
-    backendUrl: serverUrl,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+## Структура проекта
 
-});
+*   `index.html`: Разметка пользовательского интерфейса, разделенная на полноэкранные контейнеры (`#auth-container`, `#app-container`).
+*   `app.js`: Клиентская логика, управляет взаимодействием с Firebase, Firestore и UI.
+*   `style.css`: Стили проекта, включая управление видимостью контейнеров через классы `body`.
+*   `server.js`: Express-сервер для обработки загрузки и раздачи файлов, управления SSH-туннелем.
+*   `.env`: Переменные окружения для frontend (VITE_*).
 
-(Используется Firebase Admin SDK)
-Правила безопасности Firestore: Для коллекции system/config настроен безопасный гостевой доступ, позволяющий клиентам читать URL, но запрещающий его модификацию:
+## Реализованные функции
 
-javascript
+### 1. Автоматизация и CORS (server.js)
 
-rules_version = '2';
-
-service cloud.firestore {
-
-match /databases/{database}/documents {
-
-    match /system/config {
-
-      allow read: if true;
-
-      allow write: if false;
-
-    }
-
-}
-
-}
-
-Настройка CORS (Express 5): Универсальное middleware для обхода ограничений CORS и корректной обработки OPTIONS-запросов:
+*   **Программный туннель:** При запуске Express-сервера (порт 5000) автоматически стартует фоновый SSH-процесс (`ssh -R 80:127.0.0.1:5000 nokey@localhost.run`) для создания публичного адреса.
+*   **Синхронизация адреса:** Сервер парсит логи терминала, извлекает уникальный URL (например, `https://[id].lhr.life`) и обновляет его в Firestore (`db.collection('system').doc('config')`).
+*   **CORS & OPTIONS (Express 5):** Универсальное middleware для поддержки CORS, обрабатывает `OPTIONS` запросы, возвращая `200 OK` для предотвращения синтаксических ошибок путей.
 
 javascript
-
 app.use((req, res, next) => {
-
-    res.header('Access-Control-Allow-Origin', '*');
-
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Bypass-Tunnel-Reminder');
-
-    if (req.method === 'OPTIONS') {
-
-        return res.sendStatus(200);
-
-    }
-
-    next();
-
+res.header('Access-Control-Allow-Origin', '*');
+res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Bypass-Tunnel-Reminder');
+if (req.method === 'OPTIONS') { return res.sendStatus(200); }
+next();
 });
 
-2. Чат
-Комнаты: Разделение на комнаты (general + приватные) осуществляется через URL-параметр ?room=.
-Сообщения в Firestore: Документы хранятся в формате:
 
-json
+_Используйте этот код с осторожностью._
 
-{
+### 2. Безопасность и авторизация (Firebase + Firestore Rules)
 
-"username": "...",
+*   **Firebase Authentication:** Доступ к чату только для зарегистрированных пользователей. Пароли хешируются на стороне Firebase, сессия хранится в IndexedDB.
+*   **Firebase App Check:** Защита от спам-ботов через Google reCAPTCHA v3. Используется публичный Site Key из `.env`. Для локальной разработки активирован отладочный токен (`FIREBASE_APPCHECK_DEBUG_TOKEN = true`), внесенный в белый список Firebase.
+*   **Правила Firestore:**
+    *   Гостевой доступ к данным закрыт.
+    *   Настройки туннеля открыты на чтение всем.
+    *   Комнаты и сообщения защищены строгой проверкой авторизации.
 
-"text": "...",
-
-"files": [
-
-    { "fileUrl": "...", "fileType": "...", "fileName": "..." }
-
-],
-
-"createdAt": "..."
-
+javascript
+match /system/config {
+allow read: if true;
+allow write: if false;
 }
 
-Отображение: Поддерживается рендеринг изображений, видео и документов (в виде виджета со скачиванием). 
-Ссылки на файлы формируются динамически на основе backendUrl из Firestore.
-Безопасность: Защита от XSS-атак через функцию escapeHtml().
 
-Оптимизация: Ограничение на выборку сообщений (200 шт.), realtime-обновления через onSnapshot().
+match /all_rooms/{roomId} {
+allow read, write: if request.auth != null;
+}
 
-3. Загрузка файлов
-Инициализация URL: Перед загрузкой клиент асинхронно считывает актуальный backendUrl из Firestore.
-Протокол отправки: Файлы загружаются на Express-сервер через XMLHttpRequest (XHR) для получения прогресса загрузки.
-Валидация порядка вызовов: Настройка заголовков xhr.setRequestHeader() происходит после xhr.open() и до xhr.send().
 
-Логика функций:
+match /rooms/{roomId} {
+allow read, write: if request.auth != null;
+match /messages/{messageId} {
+allow read, write: if request.auth != null;
+}
+}
 
-uploadFileWithProgress(url, file, onProgress): Отправляет файл, возвращает Promise и передает прогресс выполнения в callback.
-handleFileUpload(e): Проверяет расширения файлов на клиенте, рассчитывает общий прогресс и обновляет UI.
 
-4. Прогресс-бар и состояния UI
-HTML-структура:
-html
-¨K13K
-CSS-управление состояниями (через классы на #file-preview-zone):
-state-loading: Голубой фон, анимация shimmer на баре загрузки.
-state-success: Зеленый фон.
-state-error: Красный фон.
-Пустая строка классов ('') для полного сброса панели.
+_Используйте этот код с осторожностью._
 
-5. Правила хранилища на сервере (Express + Multer)
-Роут: POST /api/upload (принимает поле chatFile).
-Сортировка по папкам: Функция getSubFolder(mimetype, originalName) распределяет файлы по директориям: images/, videos/, documents/. 
-При возврате null файл запрещен (например, .exe, .bat).
-RAR-фикс: Если MIME-тип определен как application/octet-stream, проверяется расширение файла.
+### 3. Архитектура и интерфейс (index.html + style.css)
 
-Лимиты:
+*   **Глобальные контейнеры:** Разметка `index.html` использует два основных контейнера:
+    *   `#auth-container`: Форма входа/регистрации.
+    *   `#app-container`: Интерфейс чата и сайдбар.
+*   **Кнопка выхода:** `#logout-btn` аккуратно интегрирована в верхнюю левую часть сайдбара (`<aside class="sidebar">`).
+*   **Плавное переключение:** Оба контейнера по умолчанию скрыты (`display: none !important`). JavaScript-наблюдатель `onAuthStateChanged` динамически добавляет классы `body`:
+    *   `.auth-mode`: Отображает форму входа.
+    *   `.chat-mode`: Отображает интерфейс чата.
+        Это обеспечивает отсутствие мерцания при перезагрузке и навигации.
 
-Rate limit: 50 файлов за 2 минуты.
-Максимальный размер файла: 300 МБ.
-Ограничение на документы и фото: до 50 МБ.
-Статика раздается через /uploads.
+### 4. Работа с Firestore и клиентская логика (app.js)
 
-6. Список разрешённых типов файлов
-Изображения: .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp.
-Видео: .mp4, .webm, .ogg, .mov, .avi, .mkv.
-Архивы: .zip, .rar, .7z, .tar, .gz.
-Документы: .pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .txt, .csv.
+*   **Инициализация по сессии:** Realtime-слушатели Firestore (`onSnapshot`) для сообщений и списка комнат запускаются только после успешной аутентификации пользователя (`onAuthStateChanged`).
+*   **Отписка от обновлений:** При выходе пользователя (`signOut`) принудительно вызываются функции отписки от обновлений базы данных, предотвращая ошибки "Missing or insufficient permissions".
+*   **Идентификация автора:** Поле ввода имени пользователя (`<input type="text" readonly>`) автоматически заполняется `user.email` текущей сессии Firebase Auth.
+*   **Чат-функционал:**
+    *   Разделение комнат через URL-параметр `?room=`.
+    *   Лимит на 200 сообщений на комнату.
+    *   Защита от XSS через функцию `escapeHtml()`.
+    *   Рендеринг изображений, видео и кастомных виджетов с возможностью скачивания документов.
 
-7. Боковая панель (Sidebar)
-Отображает список комнат в реальном времени из коллекции Firestore all_rooms.
-Кнопка создания комнаты генерирует случайный ID.
-Кнопки "Поделиться ссылкой" (копирование в буфер обмена), "Удалить комнату" и быстрого возврата в комнату general.
+### 5. Загрузка и валидация файлов
+
+*   **Получение backendUrl:** Перед загрузкой файлов клиент асинхронно запрашивает актуальный `backendUrl` из Firestore.
+*   **Отправка через XMLHttpRequest:** Файлы отправляются на Express-сервер для расчета прогресса загрузки в реальном времени.
+*   **Управление состоянием загрузки:** Информационные состояния зоны предпросмотра (`#file-preview-zone`) переключаются через CSS-классы (`state-loading`, `state-success`, `state-error`).
+*   **Валидация расширений (клиент):** Происходит до отправки. Разрешены: изображения, видео, архивы (.zip, .rar, .7z, .tar, .gz) и документы (.pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .txt, .csv).
+*   **Серверные лимиты (Express + Multer):**
+    *   Статика раздается из `/uploads`.
+    *   Функция `getSubFolder(mimetype, originalName)` распределяет файлы по подпапкам (с обработкой `application/octet-stream`).
+    *   Лимит размера файла: 300 МБ (фото и документы до 50 МБ).
+    *   Ограничение частоты: 50 файлов за 2 минуты.
