@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мессенджер комнат</title>
-  <script type="module" crossorigin src="/my-chat/assets/index-DVWLz1r5.js"></script>
-  <link rel="stylesheet" crossorigin href="/my-chat/assets/index-dL939Hu1.css">
+  <script type="module" crossorigin src="/my-chat/assets/index-BdeEPHes.js"></script>
+  <link rel="stylesheet" crossorigin href="/my-chat/assets/index-BUMCoEfc.css">
 </head>
 
 <body> <!-- Класс auth-mode управляет видимостью через CSS -->
@@ -14,6 +14,12 @@
 <div id="auth-container">
     <form id="auth-form" class="auth-card">
         <h2 id="auth-title">Вход в чат</h2>
+
+        <!-- НОВОЕ ПОЛЕ: Никнейм (изначально скрыто через специальный класс) -->
+        <div id="auth-nickname-group" class="auth-input-group register-only-field">
+            <label for="auth-nickname">Имя в чате (Никнейм)</label>
+            <input type="text" id="auth-nickname" placeholder="Например, Снайпер">
+        </div>
 
         <div class="auth-input-group">
             <label for="auth-email">Email</label>
@@ -50,6 +56,9 @@
                 <ul id="rooms-list">
                     <!-- Сюда JS вставляет комнаты динамически -->
                 </ul>
+            </div>
+            <div class="sidebar-footer" style="margin-top: auto; padding-top: 15px;">
+                <button id="delete-account-btn" class="delete-account-button">⚠️ Удалить мой аккаунт</button>
             </div>
         </aside>
 
