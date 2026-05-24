@@ -574,3 +574,15 @@ body.chat-mode #app-container {
 .delete-account-button:active {
     transform: scale(0.98);
 }
+
+/* --- СЛУЖЕБНЫЕ КЛАССЫ ДЛЯ РЕЖИМА РЕГИСТРАЦИИ --- */
+/* По умолчанию скрываем поле никнейма (для режима Входа) */
+.register-only-field {
+    display: none !important;
+}
+
+/* Если на самой форме включается класс 'show-register-fields', поле становится видимым */
+form.show-register-fields .register-only-field {
+    display: flex !important;
+    flex-direction: column;
+}

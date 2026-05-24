@@ -7,7 +7,8 @@ import {
     createUserWithEmailAndPassword,
     onAuthStateChanged,
     signOut,
-    deleteUser
+    deleteUser,
+    updateProfile
 } from 'firebase/auth';
 
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
@@ -74,6 +75,9 @@ const toggleModeBtn = document.getElementById('auth-toggle-mode-btn');
 const authTitle = document.getElementById('auth-title');
 const switchDesc = document.getElementById('auth-switch-desc');
 const logoutBtn = document.getElementById('logout-btn');
+const authNicknameGroup = document.getElementById('auth-nickname-group');
+const nicknameInput = document.getElementById('auth-nickname');
+
 
 // Селектор новой кнопки
 const deleteAccountBtn = document.getElementById('delete-account-btn');
@@ -174,11 +178,17 @@ toggleModeBtn.addEventListener('click', () => {
         submitBtn.textContent = 'Войти';
         switchDesc.textContent = 'Ещё нет аккаунта?';
         toggleModeBtn.textContent = 'Зарегистрироваться';
+
+        authForm.classList.remove('show-register-fields'); // Скрываем поле никнейма
+        nicknameInput.removeAttribute('required');          // Снимаем обязательность заполнения
     } else {
         authTitle.textContent = 'Регистрация';
         submitBtn.textContent = 'Создать аккаунт';
         switchDesc.textContent = 'Уже есть аккаунт?';
         toggleModeBtn.textContent = 'Войти';
+
+        authForm.classList.add('show-register-fields');    // Показываем поле никнейма
+        nicknameInput.setAttribute('required', 'true');     // Делаем поле обязательным
     }
 });
 
@@ -187,16 +197,25 @@ authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = emailInput.value.trim();
     const password = passwordInput.value;
+    const nickname = nicknameInput.value.trim(); // Получаем введенный ник
 
     try {
         if (isLoginMode) {
             await signInWithEmailAndPassword(auth, email, password);
         } else {
-            await createUserWithEmailAndPassword(auth, email, password);
-            alert('Аккаунт успешно создан! Входим...');
+            // 1. Создаем пользователя
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+            // 2. Сразу же записываем никнейм в его профиль Firebase Auth
+            await updateProfile(userCredential.user, {
+                displayName: nickname
+            });
+
+            alert('Аккаунт успешно создан! Добро пожаловать.');
         }
         authForm.reset();
     } catch (error) {
+        // ... ваш существующий блок catch с обработкой ошибок ошибок ...
         console.error("Ошибка аутентификации:", error);
         let errorMessage = 'Произошла ошибка при авторизации';
         if (error.code === 'auth/invalid-credential') {
@@ -228,10 +247,12 @@ onAuthStateChanged(auth, (user) => {
         document.body.classList.remove('auth-mode');
         document.body.classList.add('chat-mode');
 
-        console.log(`Успешный вход! Пользователь: ${user.email}`);
+        // Выводим в консоль ник для проверки
+        console.log(`Успешный вход! Никнейм: ${user.displayName || 'Не указан'}, Email: ${user.email}`);
 
         if (userInput) {
-            userInput.value = user.email;
+            // Если у пользователя есть displayName, пишем его. Если нет (для старых аккаунтов) — пишем email.
+            userInput.value = user.displayName || user.email;
             userInput.readOnly = true;
         }
 

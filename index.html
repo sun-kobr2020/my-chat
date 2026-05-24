@@ -14,6 +14,12 @@
     <form id="auth-form" class="auth-card">
         <h2 id="auth-title">Вход в чат</h2>
 
+        <!-- НОВОЕ ПОЛЕ: Никнейм (изначально скрыто через специальный класс) -->
+        <div id="auth-nickname-group" class="auth-input-group register-only-field">
+            <label for="auth-nickname">Имя в чате (Никнейм)</label>
+            <input type="text" id="auth-nickname" placeholder="Например, Снайпер">
+        </div>
+
         <div class="auth-input-group">
             <label for="auth-email">Email</label>
             <input type="email" id="auth-email" required placeholder="example@mail.com">
