@@ -586,3 +586,16 @@ form.show-register-fields .register-only-field {
     display: flex !important;
     flex-direction: column;
 }
+
+/* Индикатор печатания текста */
+.typing-indicator {
+    height: 20px;
+    padding: 0 15px;
+    font-size: 13px;
+    color: #64748b; /* Серый цвет */
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    background: transparent;
+    transition: opacity 0.2s ease;
+}

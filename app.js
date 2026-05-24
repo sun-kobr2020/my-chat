@@ -210,6 +210,7 @@ authForm.addEventListener('submit', async (e) => {
             await updateProfile(userCredential.user, {
                 displayName: nickname
             });
+            await userCredential.user.reload();
 
             alert('Аккаунт успешно создан! Добро пожаловать.');
         }
@@ -239,6 +240,73 @@ if (logoutBtn) {
         }
     });
 }
+
+// Селектор нового блока на экране
+const typingZone = document.getElementById('typing-indicator-zone');
+
+let typingTimeout = null;
+let isCurrentlyTyping = false;
+
+// Функция, которая отправляет наш статус «печатает» в Firestore
+async function setTypingStatus(isTyping) {
+    const user = auth.currentUser;
+    if (!user || !currentRoom) return;
+
+    // Имя, которое увидят другие (никнейм или email)
+    const currentUsername = user.displayName || user.email;
+
+    // Генерируем уникальный ID документа на основе связки Комната + Email пользователя
+    const statusDocId = `${currentRoom}_${user.email.replace(/\./g, '_')}`;
+
+    try {
+        // Записываем статус в служебную коллекцию
+        await setDoc(doc(db, "typing_statuses", statusDocId), {
+            room: currentRoom,
+            username: currentUsername,
+            userEmail: user.email,
+            isTyping: isTyping,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    } catch (err) {
+        console.error("Ошибка обновления статуса печати:", err);
+    }
+}
+
+// Слушаем ввод текста в поле сообщения
+msgInput.addEventListener('input', () => {
+    // Если пользователь только начал вводить текст и статус еще false
+    if (!isCurrentlyTyping && msgInput.value.length > 0) {
+        isCurrentlyTyping = true;
+        setTypingStatus(true); // Сообщаем в базу: "Я печатаю"
+    }
+
+    // Сбрасываем старый таймер ожидания
+    clearTimeout(typingTimeout);
+
+    // Если пользователь стёр весь текст из инпута
+    if (msgInput.value.length === 0) {
+        isCurrentlyTyping = false;
+        setTypingStatus(false); // Сообщаем в базу: "Я стёр текст / закончил"
+        return;
+    }
+
+    // Если пользователь замер и не нажимает кнопки более 2.5 секунд
+    typingTimeout = setTimeout(() => {
+        if (isCurrentlyTyping) {
+            isCurrentlyTyping = false;
+            setTypingStatus(false); // Сообщаем в базу: "Я остановился"
+        }
+    }, 2500);
+});
+
+// Безопасность: если пользователь отправил сообщение, статус печати мгновенно гасим
+msgInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        clearTimeout(typingTimeout);
+        isCurrentlyTyping = false;
+        setTypingStatus(false);
+    }
+});
 
 // ГЛАВНЫЙ НАБЛЮДАТЕЛЬ ЗА СЕССИЕЙ
 onAuthStateChanged(auth, (user) => {
@@ -351,11 +419,57 @@ onAuthStateChanged(auth, (user) => {
                 console.error("Ошибка загрузки списка комнат:", error);
             });
         }
+        // --- 6. СЛУШАТЕЛЬ СТАТУСОВ ПЕЧАТАНИЯ ТЕКСТА ---
+        let unsubscribeTyping = null;
+
+        if (typingZone) {
+            // Фильтруем документы: ищем только тех, кто в нашей комнате и у кого статус isTyping === true
+            const typingQuery = query(
+                collection(db, "typing_statuses"),
+                orderBy("updatedAt", "desc")
+            );
+
+            unsubscribeTyping = onSnapshot(typingQuery, (snapshot) => {
+                const typers = [];
+                const now = Date.now();
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+
+                    // Выбираем только тех, кто:
+                    // 1. Находится в текущей комнате
+                    // 2. Имеет флаг true
+                    // 3. Это НЕ мы сами (сверяем по email)
+                    if (data.room === currentRoom && data.isTyping === true && data.userEmail !== user.email) {
+
+                        // Дополнительная защита: проверяем, что статус обновлялся не более 10 секунд назад
+                        // (на случай, если у друга внезапно пропал интернет во время набора текста)
+                        const timeDiff = data.updatedAt ? (now - data.updatedAt.toDate().getTime()) : 0;
+                        if (timeDiff < 10000) {
+                            typers.push(data.username);
+                        }
+                    }
+                });
+
+                // Выводим текст на экран в зависимости от количества печатающих
+                if (typers.length === 0) {
+                    typingZone.innerText = ''; // Никто не пишет — пустота
+                } else if (typers.length === 1) {
+                    typingZone.innerText = `✍️ ${typers[0]} печатает...`;
+                } else if (typers.length > 1 && typers.length < 4) {
+                    typingZone.innerText = `✍️ ${typers.join(', ')} печатают...`;
+                } else {
+                    typingZone.innerText = `✍️ Несколько человек печатают...`;
+                }
+            });
+        }
+
     } else {
         // Пользователь вышел или не авторизован: включаем режим авторизации, гасим чат
         document.body.classList.remove('chat-mode');
         document.body.classList.add('auth-mode');
 
+        if (unsubscribeTyping) unsubscribeTyping();
         if (unsubscribeMessages) unsubscribeMessages();
         if (unsubscribeRooms) unsubscribeRooms();
         if (chatWindow) chatWindow.innerHTML = '';
