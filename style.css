@@ -552,3 +552,25 @@ body.chat-mode #app-container {
 .grecaptcha-badge {
     z-index: 9999 !important;
 }
+
+/* Кнопка полного удаления аккаунта */
+.delete-account-button {
+    width: 100%;
+    background-color: #8b0000; /* Темно-красный цвет */
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.1s;
+    box-sizing: border-box;
+}
+
+.delete-account-button:hover {
+    background-color: #bd2130; /* Ярче при наведении */
+}
+
+.delete-account-button:active {
+    transform: scale(0.98);
+}

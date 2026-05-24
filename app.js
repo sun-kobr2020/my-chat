@@ -6,7 +6,8 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     onAuthStateChanged,
-    signOut
+    signOut,
+    deleteUser
 } from 'firebase/auth';
 
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
@@ -73,6 +74,50 @@ const toggleModeBtn = document.getElementById('auth-toggle-mode-btn');
 const authTitle = document.getElementById('auth-title');
 const switchDesc = document.getElementById('auth-switch-desc');
 const logoutBtn = document.getElementById('logout-btn');
+
+// Селектор новой кнопки
+const deleteAccountBtn = document.getElementById('delete-account-btn');
+
+// Логика безопасного удаления аккаунта
+if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', async () => {
+        const user = auth.currentUser; // Получаем текущего вошедшего пользователя
+
+        if (!user) {
+            alert("Пользователь не найден или сессия истекла.");
+            return;
+        }
+
+        // Первое подтверждение
+        const firstConfirm = confirm(`Вы уверены, что хотите НАВСЕГДА удалить свой аккаунт (${user.email})? Это действие нельзя отменить.`);
+
+        if (firstConfirm) {
+            // Второе подтверждение для защиты от случайного клика
+            const secondConfirm = confirm("ВНИМАНИЕ: Все ваши доступы будут аннулированы прямо сейчас. Подтверждаете удаление?");
+
+            if (secondConfirm) {
+                try {
+                    // Удаляем пользователя из Firebase Auth
+                    await deleteUser(user);
+                    alert("Ваш аккаунт был успешно и безвозвратно удален.");
+
+                    // Наблюдатель onAuthStateChanged сам увидит, что пользователя больше нет,
+                    // и автоматически переключит интерфейс в режим 'auth-mode' (на экран входа)
+
+                } catch (error) {
+                    console.error("Ошибка при удалении аккаунта:", error);
+
+                    // Защита Firebase: если пользователь вошел давно, Google потребует перезайти в аккаунт перед удалением
+                    if (error.code === 'auth/requires-recent-login') {
+                        alert("В целях безопасности для удаления аккаунта необходимо перезайти в систему. Пожалуйста, выйдете и войдите заново, затем повторите попытку.");
+                    } else {
+                        alert(`Не удалось удалить аккаунт: ${error.message}`);
+                    }
+                }
+            }
+        }
+    });
+}
 
 const roomNameElement = document.getElementById('room-name');
 const chatWindow = document.getElementById('chat-window');
